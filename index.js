@@ -5,7 +5,7 @@ var _ = {
   find: require('lodash/find')
 }
 
-module.exports = function(opts) {return new DataFrame(opts)}
+module.exports = function (opts) { return new DataFrame(opts) }
 
 function DataFrame (opts) {
   this.rows = opts.rows
@@ -16,7 +16,7 @@ function DataFrame (opts) {
   return this
 }
 
-DataFrame.prototype.calculate = function(opts) {
+DataFrame.prototype.calculate = function (opts) {
   this.activeDimensions = opts.dimensions
   if (this.activeDimensions.length < 1) this.activeDimensions = ['']
   this.sortBy = opts.sortBy
@@ -30,7 +30,7 @@ DataFrame.prototype.calculate = function(opts) {
   return resultRows
 }
 
-DataFrame.prototype.getResults = function() {
+DataFrame.prototype.getResults = function () {
   var self = this
 
   var columns = this.getColumns()
@@ -42,16 +42,16 @@ DataFrame.prototype.getResults = function() {
   var results = {}
   var setKeyCache = {}
 
-  this.rows.forEach(function(row) {
+  this.rows.forEach(function (row) {
     var setKeys = self.createSetKeys(activeDimensions, row)
-    var dVals = parseSetKey(setKeys[setKeys.length-1])
+    var dVals = parseSetKey(setKeys[setKeys.length - 1])
     if (filter && !filter(dVals)) return
 
     var curLevel = results
 
-    setKeys.forEach(function(setKey, iLevel) {
+    setKeys.forEach(function (setKey, iLevel) {
       if (!curLevel[setKey]) {
-        curLevel[setKey] = {value: {}, subDimensions: {}, key: setKey}
+        curLevel[setKey] = { value: {}, subDimensions: {}, key: setKey }
       }
 
       var result = curLevel[setKey].value
@@ -71,15 +71,14 @@ DataFrame.prototype.getResults = function() {
     })
   })
 
-  _.each(setKeyCache, function(cache, key) {
+  _.each(setKeyCache, function (cache, key) {
     self.cache[key] = cache
   })
 
   return results
-
 }
 
-DataFrame.prototype.parseResults = function(results, level) {
+DataFrame.prototype.parseResults = function (results, level) {
   var self = this
   var level = level || 0
   var rows = []
@@ -87,44 +86,44 @@ DataFrame.prototype.parseResults = function(results, level) {
   var sorted = _.sortBy(results, this.getSortValue.bind(this))
   if (this.sortDir === 'desc') sorted.reverse()
 
-  _.each(sorted, function(dimension) {
+  _.each(sorted, function (dimension) {
     var total = dimension.value
     total._level = level
     total._key = dimension.key
 
-    var numSubDimensions = Object.keys(dimension.subDimensions).length;
+    var numSubDimensions = Object.keys(dimension.subDimensions).length
 
-    if(self.compact && (numSubDimensions == 1)) {
+    if (self.compact && (numSubDimensions == 1)) {
       // don't push the row
     } else {
       rows.push(total)
     }
 
     if (numSubDimensions) {
-      var subLevel = (self.compact && numSubDimensions == 1) ? level : level + 1;
+      var subLevel = (self.compact && numSubDimensions == 1) ? level : level + 1
       var subRows = self.parseResults(dimension.subDimensions, subLevel)
-      subRows.forEach(function(subRow) {rows.push(subRow)})
+      subRows.forEach(function (subRow) { rows.push(subRow) })
     }
   })
 
   return rows
 }
 
-DataFrame.prototype.getColumns = function() {
+DataFrame.prototype.getColumns = function () {
   var columns = []
 
-  this.dimensions.forEach(function(d) {
-    columns.push({type: 'dimension', title: d, value: d})
+  this.dimensions.forEach(function (d) {
+    columns.push({ type: 'dimension', title: d, value: d })
   })
 
   return columns
 }
 
-DataFrame.prototype.createSetKeys = function(dimensions, row) {
+DataFrame.prototype.createSetKeys = function (dimensions, row) {
   var keys = []
 
   for (var i = 0; i < dimensions.length; i++) {
-    var sds = dimensions.slice(0, i+1)
+    var sds = dimensions.slice(0, i + 1)
     keys.push(this.createSetKey(sds, row))
   }
 
@@ -135,7 +134,7 @@ DataFrame.prototype.createSetKey = function (dimensions, row) {
   var self = this
 
   var key = ''
-  _.sortBy(dimensions).forEach(function(dTitle) {
+  _.sortBy(dimensions).forEach(function (dTitle) {
     var dimension = self.findDimension(dTitle)
     key += [dTitle, getValue(dimension, row)].join('\xff') + '\xff'
   })
@@ -143,29 +142,28 @@ DataFrame.prototype.createSetKey = function (dimensions, row) {
 }
 
 DataFrame.prototype.findDimension = function (title) {
-  return _.find(this.dimensions, function(d) {
+  return _.find(this.dimensions, function (d) {
     return d.title === title
   })
 }
 
-DataFrame.prototype.getSortValue = function(result) {
+DataFrame.prototype.getSortValue = function (result) {
   var sortBy = this.sortBy
   var columns = this.getColumns()
-  var sortCol = _.find(columns, function(c) {
+  var sortCol = _.find(columns, function (c) {
     return c.title === sortBy
   }) || sortBy
 
   var val = getValue(sortCol, result.value)
   if (typeof val === 'undefined') return result.key
 
-  if (!isNaN(parseFloat(val)) && isFinite(val)){
+  if (!isNaN(parseFloat(val)) && isFinite(val)) {
     return +val
-  } else if (typeof(val) === 'string') {
+  } else if (typeof (val) === 'string') {
     return val.toLowerCase()
   } else {
     return val
   }
-
 }
 
 function parseSetKey (setKey) {
@@ -173,7 +171,7 @@ function parseSetKey (setKey) {
   var kvPairs = setKey.split('\xff')
   for (var i = 0; i < kvPairs.length; i += 2) {
     var dTitle = kvPairs[i]
-    var dVal = kvPairs[i+1]
+    var dVal = kvPairs[i + 1]
 
     if (dTitle) parsed[dTitle] = dVal
   }
